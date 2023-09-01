@@ -19,6 +19,7 @@ var editor_output = CodeMirror.fromTextArea(output, {
 
 function parser() {
   try {
+    localStorage.setItem("input", editor_input.getValue())
     jsontext = JSON.parse(editor_input.getValue())
 
     root = jsontext['responseBody']['entities']
@@ -73,11 +74,12 @@ function parser() {
 
   } catch (error) {
     editor_output.setValue("[ NOT A VALID SANKHYA JSON ]")
-    return
   }
 
+  output.value = editor_output.getValue()
 }
 
+editor_input.setValue(localStorage.getItem("input") ? localStorage.getItem("input") : "")
 parser()
 editor_input.on('change', parser);
 search_field.addEventListener('input', parser);
