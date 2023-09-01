@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Application</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .top-section {
+    background-color: #333;
+    color: white;
+    width: 100%;
+    min-height: 10%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .checkbox-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  .checkbox-container label {
+    color: white; /* Set the checkbox label color to black */
+    padding-bottom: 10px;
+  }
+
+  .text-container {
+    flex: 1; /* Fill remaining space */
+    display: flex;
+    gap: 20px;
+    margin: 20px;
+    height: 100%;
+  }
+  
+  .text-area { 
+    flex: 1; /* Fill remaining space */
+    display: flex;
+    flex-direction: column;
+  }
+
+  textarea {
+    flex: 1; /* Fill remaining space */
+    resize: none; /* Prevent resizing */
+    box-sizing: border-box;
+    padding: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="top-section">
+    <h1>Sankhya Decrapifier</h1>
+    <h4>Turns the total crap Sankhya returns from loadRecords into legible stuff</h4>
+    <div class="checkbox-container">
+      <label><input id="filter_empty_values" type="checkbox">Filter Empty Values</label>
+      <label><input id="filter_custom_fields" type="checkbox">Filter Custom Fields</label>
+    </div>
+  </div>
+  <div class="text-container">
+    <div class="text-area">
+        <textarea  id="input" placeholder="Input Text"></textarea>
+    </div>
+    <div class="text-area">
+        <input placeholder="Search" id="search" type="text">
+        <textarea  id="output" placeholder="Output Text" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const filter_empty_values = document.getElementById("filter_empty_values")
+    const filter_custom_fields = document.getElementById("filter_custom_fields")
+    const search_field =  document.getElementById("search")
+
+    
+    
+    function parser() {
+        try {
+            jsontext = JSON.parse(input.value)
+            
+            root = jsontext['responseBody']['entities']
+            fields = root['metadata']['fields']['field']
+            entities = root['entity']
+            
+            names = []
+
+            for (const item of fields) {
+                names.push(item["name"])
+            }
+            
+            list = [] 
+            
+            function sort(entity) { 
+                sorted_values = {}
+                for (let i = 0; i < names.length ; i++) { 
+                    value = entity['f'+i]
+                    value = value["$"] ? value["$"] : ""; 
+                    
+                    if (filter_empty_values.checked && (!value || String(value) == "0" )) {
+                        continue
+                    }
+                    
+                    if (filter_custom_fields.checked && names[i].startsWith("AD_")) {
+                        continue
+                    }
+                    
+                    if (search_field.value)  {
+                      search_value = search_field.value.toUpperCase()
+                      name = names[i].toUpperCase()
+
+                      if (!(name.includes(search_value)) && !value.toUpperCase().includes(search_value))
+                        continue
+                    }
+                    
+                    sorted_values[names[i]] = value
+                }
+                
+                list.push(sorted_values)
+            }
+            
+            if (Array.isArray(entities)) {
+                for (const entity of entities) {
+                    sort(entity);
+                }
+            } else {
+                sort(entities);
+            }
+            
+            output.value = JSON.stringify(list, null, 2)
+
+        } catch (error) {
+            output.value = "[ NOT A VALID SANKHYA JSON ]"
+            return
+        }
+
+    }
+
+    parser()
+    input.addEventListener('input', parser);
+    search_field.addEventListener('input', parser);
+    filter_empty_values.addEventListener('change', parser)
+    filter_custom_fields.addEventListener('change', parser)
+    
+    input.addEventListener('blur', function() { input.value = JSON.stringify(JSON.parse(input.value), null, 2)})
+  </script>
+</body>
+</html>
