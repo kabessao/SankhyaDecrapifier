@@ -35,6 +35,11 @@ function parser() {
     list = [] 
 
     function sort(entity) { 
+
+      if (entity == undefined){
+        return
+      }
+
       sorted_values = {}
       for (let i = 0; i < names.length ; i++) { 
         value = entity['f'+i]
