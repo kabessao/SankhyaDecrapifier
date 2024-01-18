@@ -64,6 +64,12 @@ function parser() {
 
     if (Array.isArray(entities)) {
       for (const entity of entities) {
+
+        if (entity == undefined){
+          editor_output.setValue("{}")
+          break
+        }
+
         sort(entity);
       }
     } else {
